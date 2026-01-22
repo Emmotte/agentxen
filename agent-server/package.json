@@ -1,0 +1,21 @@
+{
+  "name": "agentxen-agent-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node --enable-source-maps dist/index.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.4.0",
+    "ws": "^8.13.0",
+    "zod": "^3.23.2",
+    "playwright": "^1.37.0"
+  },
+  "devDependencies": {
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.1.6"
+  }
+}
