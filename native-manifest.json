@@ -1,0 +1,7 @@
+{
+  "name": "agentxen",
+  "description": "AgentXen Native Messaging Host",
+  "path": "/usr/local/bin/agentxen-host",
+  "type": "stdio",
+  "allowed_extensions": ["agentxen@zen-browser.local"]
+}

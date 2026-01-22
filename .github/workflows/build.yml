@@ -1,0 +1,209 @@
+name: Build Windows Executable
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-build.txt
+    
+    - name: Build with PyInstaller
+      run: |
+        # Build native host
+        pyinstaller agentxen.spec --clean --noconfirm
+        
+        # Build launcher
+        pyinstaller --noconfirm --clean --name=AgentXen --windowed --onefile --add-data="extension;extension" --add-data="native-manifest.json;." launcher.py
+    
+    - name: Create distribution package
+      run: |
+        $distDir = "dist/AgentXen-Package"
+        New-Item -Path $distDir -ItemType Directory -Force
+        
+        Copy-Item -Path "dist/agentxen-host" -Destination $distDir -Recurse -Force
+        Copy-Item -Path "dist/AgentXen.exe" -Destination $distDir -Force
+        Copy-Item -Path "extension" -Destination $distDir -Recurse -Force
+        Copy-Item -Path "README.md", "ZEN_INTEGRATION.md", "SETUP.md", "DISTRIBUTION.md" -Destination $distDir
+        
+        # Create install script
+        @"
+        @echo off
+        echo Installing AgentXen...
+        set INSTALL_DIR=%USERPROFILE%\.agentxen
+        mkdir "%INSTALL_DIR%" 2>nul
+        xcopy /E /I /Y agentxen-host "%INSTALL_DIR%\agentxen-host"
+        xcopy /E /I /Y extension "%INSTALL_DIR%\extension"
+        echo Installed to %INSTALL_DIR%
+        echo Run AgentXen.exe to launch
+        pause
+        "@ | Out-File -FilePath "$distDir/install.bat" -Encoding ASCII
+        
+        Compress-Archive -Path "$distDir/*" -DestinationPath "dist/AgentXen-Windows-x64.zip" -Force
+      shell: pwsh
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AgentXen-Windows-x64
+        path: dist/AgentXen-Windows-x64.zip
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/AgentXen-Windows-x64.zip
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-build.txt
+    
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller agentxen.spec --clean --noconfirm
+        pyinstaller --noconfirm --clean --name=AgentXen --windowed --onefile --add-data="extension:extension" --add-data="native-manifest.json:." launcher.py
+    
+    - name: Create distribution package
+      run: |
+        DIST_DIR="dist/AgentXen-Package"
+        mkdir -p "$DIST_DIR"
+        
+        cp -r dist/agentxen-host "$DIST_DIR/"
+        cp dist/AgentXen "$DIST_DIR/"
+        cp -r extension "$DIST_DIR/"
+        cp README.md ZEN_INTEGRATION.md SETUP.md DISTRIBUTION.md "$DIST_DIR/"
+        
+        cat > "$DIST_DIR/install.sh" << 'EOF'
+        #!/bin/bash
+        echo "Installing AgentXen..."
+        INSTALL_DIR="$HOME/.agentxen"
+        mkdir -p "$INSTALL_DIR"
+        cp -r agentxen-host "$INSTALL_DIR/"
+        cp -r extension "$INSTALL_DIR/"
+        echo "Installed to $INSTALL_DIR"
+        echo "Run ./AgentXen to launch"
+        EOF
+        
+        chmod +x "$DIST_DIR/install.sh"
+        chmod +x "$DIST_DIR/AgentXen"
+        chmod +x "$DIST_DIR/agentxen-host/agentxen-host"
+        
+        cd dist
+        tar -czf AgentXen-Linux-x64.tar.gz AgentXen-Package/
+        cd ..
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AgentXen-Linux-x64
+        path: dist/AgentXen-Linux-x64.tar.gz
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/AgentXen-Linux-x64.tar.gz
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-build.txt
+    
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller agentxen.spec --clean --noconfirm
+        pyinstaller --noconfirm --clean --name=AgentXen --windowed --onefile --add-data="extension:extension" --add-data="native-manifest.json:." launcher.py
+    
+    - name: Create distribution package
+      run: |
+        DIST_DIR="dist/AgentXen-Package"
+        mkdir -p "$DIST_DIR"
+        
+        cp -r dist/agentxen-host "$DIST_DIR/"
+        cp dist/AgentXen "$DIST_DIR/"
+        cp -r extension "$DIST_DIR/"
+        cp README.md ZEN_INTEGRATION.md SETUP.md DISTRIBUTION.md "$DIST_DIR/"
+        
+        cat > "$DIST_DIR/install.sh" << 'EOF'
+        #!/bin/bash
+        echo "Installing AgentXen..."
+        INSTALL_DIR="$HOME/.agentxen"
+        mkdir -p "$INSTALL_DIR"
+        cp -r agentxen-host "$INSTALL_DIR/"
+        cp -r extension "$INSTALL_DIR/"
+        echo "Installed to $INSTALL_DIR"
+        echo "Run ./AgentXen to launch"
+        EOF
+        
+        chmod +x "$DIST_DIR/install.sh"
+        chmod +x "$DIST_DIR/AgentXen"
+        chmod +x "$DIST_DIR/agentxen-host/agentxen-host"
+        
+        cd dist
+        tar -czf AgentXen-macOS-x64.tar.gz AgentXen-Package/
+        cd ..
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AgentXen-macOS-x64
+        path: dist/AgentXen-macOS-x64.tar.gz
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/AgentXen-macOS-x64.tar.gz
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

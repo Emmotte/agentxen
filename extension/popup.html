@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1e1e1e;
+      color: #e0e0e0;
+      margin: 0;
+    }
+    
+    h2 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .status {
+      padding: 12px;
+      background: #2d2d2d;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666;
+    }
+    
+    .status-dot.connected {
+      background: #4caf50;
+    }
+    
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #0084ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    
+    button:hover {
+      background: #0073e6;
+    }
+    
+    .info {
+      font-size: 12px;
+      color: #888;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🤖 AgentXen</h2>
+  
+  <div class="status">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Connecting...</span>
+  </div>
+  
+  <button id="open-sidebar">Open Chat Sidebar</button>
+  <button id="toggle-agent-mode">Enable Agent Mode</button>
+  
+  <div class="info">
+    Version 0.1.0<br>
+    Press Alt+Shift+A to open sidebar
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
